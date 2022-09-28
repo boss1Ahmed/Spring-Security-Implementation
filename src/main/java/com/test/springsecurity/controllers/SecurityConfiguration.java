@@ -3,6 +3,7 @@ package com.test.springsecurity.controllers;
 import com.test.springsecurity.filters.JWTFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -29,11 +30,13 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-                .authorizeRequests().antMatchers("/admin").hasRole("ADMIN")
+                .authorizeRequests()
+                .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .antMatchers("/admin").hasRole("ADMIN")
                 .antMatchers("/user/*").hasRole("USER")
                 //.antMatchers("/").permitAll()
 
-                .and().csrf().disable().authorizeRequests().antMatchers("/authenticate").permitAll().anyRequest().authenticated()
+                .and().csrf().disable().authorizeRequests().antMatchers("/authenticate","/refresh_token").permitAll().anyRequest().authenticated()
                 //.and().formLogin();
                 .and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

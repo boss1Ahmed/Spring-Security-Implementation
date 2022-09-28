@@ -23,4 +23,10 @@ public class UserServices implements IUserServices{
     public User saveUser(User user){
         return userRepository.save(encryptPassword(user));
     }
+
+    @Override
+    public User findByUsername(String username) {
+        return userRepository.findByUsername(username).get();
+    }
+
 }

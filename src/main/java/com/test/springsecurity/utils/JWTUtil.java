@@ -3,6 +3,7 @@ package com.test.springsecurity.utils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -10,6 +11,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class JWTUtil {
@@ -35,18 +37,33 @@ public class JWTUtil {
     private Boolean isTokenExpired(String token){
         return extractExpiration(token).before(new Date());
     }
-    public String generatToken(UserDetails userDetails){
+
+    public String generatToken(UserDetails userDetails , int mins , boolean withclaims){
         Map<String, Object> claims = new HashMap<>();
-        return createToken(claims, userDetails.getUsername());
+        if (withclaims){
+            claims.put("authorities", userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()));
+
+        }
+        return createToken(claims, userDetails.getUsername(),mins);
     }
 
-    private String createToken(Map<String, Object> claims, String username) {
+    private String createToken(Map<String, Object> claims, String username , int mins) {
         return Jwts.builder().setClaims(claims).setSubject(username).setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000*60*60*10))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000L *60*mins))
                 .signWith(SignatureAlgorithm.HS512, SECRET_KEY).compact();
     }
     public Boolean validateToken(String token, UserDetails userDetails){
+
         final String username = userDetails.getUsername();
         return (username.equals(extractuUsername(token)) && !isTokenExpired(token));
     }
+
+    public boolean isAccesstoken(String token){
+        if (this.extractAllClaims(token).get("authorities") !=null) {
+            return true;
+        }
+        return false;
+    }
+
+
 }
